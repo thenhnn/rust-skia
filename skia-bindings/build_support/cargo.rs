@@ -180,6 +180,7 @@ pub fn build_release() -> bool {
 
 /// Are we inside a crate?
 pub fn is_crate() -> bool {
+    return true;
     crate_repository_hash().is_ok()
 }
 
