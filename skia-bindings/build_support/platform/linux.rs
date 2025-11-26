@@ -29,7 +29,7 @@ pub fn gn_args(config: &BuildConfiguration, builder: &mut GnArgsBuilder) {
 }
 
 pub fn link_libraries(features: &Features) -> Vec<String> {
-    let mut libs = vec!["stdc++".to_string()];
+    let mut libs = vec!["c++".to_string()];
 
     // Use pkg-config for system libraries when available
     add_pkg_config_libs(&mut libs, "freetype2", &["freetype"]);
