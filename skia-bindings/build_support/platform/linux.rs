@@ -29,7 +29,10 @@ impl PlatformDetails for Linux {
 }
 
 pub fn link_libraries(features: &Features) -> Vec<String> {
-    let mut libs = vec!["c++".to_string()];
+    let mut libs = match std::env::var("RH_SKIA_USE_LIBCXX") {
+        Ok(_) => vec!["c++".to_string()],
+        Err(_) => vec!["stdc++".to_string()],
+    };
 
     // Use pkg-config for system libraries when available
     add_pkg_config_libs(&mut libs, "freetype2", &["freetype"]);
