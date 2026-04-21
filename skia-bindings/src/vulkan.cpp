@@ -2,6 +2,7 @@
 #include "include/gpu/ganesh/vk/GrBackendDrawableInfo.h"
 #include "include/gpu/ganesh/GrBackendSurface.h"
 #include "include/gpu/ganesh/GrDirectContext.h"
+#include "include/gpu/ganesh/vk/GrVkBackendSemaphore.h"
 #include "include/gpu/ganesh/vk/GrVkBackendSurface.h"
 #include "include/gpu/ganesh/vk/GrVkDirectContext.h"
 #include "include/gpu/ganesh/vk/GrVkTypes.h"
@@ -61,6 +62,14 @@ extern "C" GrBackendTexture* C_GrBackendTexture_newVk(
 
 extern "C" void C_GrBackendRenderTargets_ConstructVk(GrBackendRenderTarget* uninitialized, int width, int height, const GrVkImageInfo* vkInfo) {
     new (uninitialized) GrBackendRenderTarget(GrBackendRenderTargets::MakeVk(width, height, *vkInfo));
+}
+
+extern "C" void C_GrBackendSemaphore_ConstructVk(GrBackendSemaphore* uninitialized, VkSemaphore semaphore) {
+    new (uninitialized) GrBackendSemaphore(GrBackendSemaphores::MakeVk(semaphore));
+}
+
+extern "C" VkSemaphore C_GrBackendSemaphores_GetVkSemaphore(const GrBackendSemaphore* semaphore) {
+    return GrBackendSemaphores::GetVkSemaphore(*semaphore);
 }
 
 extern "C" bool C_GrBackendDrawableInfo_getVkDrawableInfo(const GrBackendDrawableInfo* self, GrVkDrawableInfo* info) {

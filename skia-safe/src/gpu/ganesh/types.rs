@@ -1,7 +1,9 @@
 use std::ptr;
 
+use super::BackendSemaphore;
 use crate::gpu;
 use crate::gpu::GpuStatsFlags;
+use crate::prelude::*;
 use skia_bindings as sb;
 
 pub use skia_bindings::GrBackendApi as BackendApi;
@@ -23,37 +25,93 @@ variant_name!(SurfaceOrigin::BottomLeft);
 
 // Note: BackendState is in gl/types.rs/
 
-#[repr(C)]
-#[allow(dead_code)]
 #[derive(Debug)]
 pub struct FlushInfo {
-    // TODO: wrap access to the following fields in a safe way:
-    num_semaphores: usize,
-    gpu_stats_flags: GpuStatsFlags,
-    signal_semaphores: *mut sb::GrBackendSemaphore,
-    finished_proc: sb::GrGpuFinishedProc,
-    finished_with_stats_proc: sb::GrGpuFinishedWithStatsProc,
-    finished_context: sb::GrGpuFinishedContext,
-    submitted_proc: sb::GrGpuSubmittedProc,
-    submitted_context: sb::GrGpuSubmittedContext,
+    native: sb::GrFlushInfo,
+    signal_semaphores: Vec<BackendSemaphore>,
 }
 
 impl Default for FlushInfo {
     fn default() -> Self {
-        Self {
-            num_semaphores: 0,
-            gpu_stats_flags: GpuStatsFlags::NONE,
-            signal_semaphores: ptr::null_mut(),
-            finished_proc: None,
-            finished_with_stats_proc: None,
-            finished_context: ptr::null_mut(),
-            submitted_proc: None,
-            submitted_context: ptr::null_mut(),
-        }
+        let mut flush_info = Self {
+            native: sb::GrFlushInfo {
+                fNumSemaphores: 0,
+                fGpuStatsFlags: GpuStatsFlags::NONE.bits(),
+                fSignalSemaphores: ptr::null_mut(),
+                fFinishedProc: None,
+                fFinishedWithStatsProc: None,
+                fFinishedContext: ptr::null_mut(),
+                fSubmittedProc: None,
+                fSubmittedContext: ptr::null_mut(),
+            },
+            signal_semaphores: Vec::new(),
+        };
+        flush_info.sync_signal_semaphores();
+        flush_info
     }
 }
 
-native_transmutable!(sb::GrFlushInfo, FlushInfo);
+impl FlushInfo {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn gpu_stats_flags(&self) -> GpuStatsFlags {
+        GpuStatsFlags::from_bits_truncate(self.native.fGpuStatsFlags)
+    }
+
+    pub fn set_gpu_stats_flags(&mut self, flags: GpuStatsFlags) -> &mut Self {
+        self.native.fGpuStatsFlags = flags.bits();
+        self
+    }
+
+    pub fn signal_semaphores(&self) -> &[BackendSemaphore] {
+        &self.signal_semaphores
+    }
+
+    pub fn set_signal_semaphores(
+        &mut self,
+        semaphores: impl IntoIterator<Item = BackendSemaphore>,
+    ) -> &mut Self {
+        self.signal_semaphores = semaphores.into_iter().collect();
+        self.sync_signal_semaphores();
+        self
+    }
+
+    pub fn push_signal_semaphore(&mut self, semaphore: BackendSemaphore) -> &mut Self {
+        self.signal_semaphores.push(semaphore);
+        self.sync_signal_semaphores();
+        self
+    }
+
+    pub fn clear_signal_semaphores(&mut self) -> &mut Self {
+        self.signal_semaphores.clear();
+        self.sync_signal_semaphores();
+        self
+    }
+
+    fn sync_signal_semaphores(&mut self) {
+        self.native.fNumSemaphores = self.signal_semaphores.len();
+        self.native.fSignalSemaphores = if self.signal_semaphores.is_empty() {
+            ptr::null_mut()
+        } else {
+            self.signal_semaphores.native_mut().as_mut_ptr()
+        };
+    }
+}
+
+impl NativeAccess for FlushInfo {
+    type Native = sb::GrFlushInfo;
+
+    fn native(&self) -> &Self::Native {
+        &self.native
+    }
+
+    fn native_mut(&mut self) -> &mut Self::Native {
+        self.sync_signal_semaphores();
+        &mut self.native
+    }
+}
 
 pub use sb::GrSemaphoresSubmitted as SemaphoresSubmitted;
 variant_name!(SemaphoresSubmitted::Yes);

@@ -45,7 +45,12 @@ pub use sb::VkRect2D as Rect2D;
 pub use sb::VkRenderPass as RenderPass;
 pub use sb::VkSamplerYcbcrModelConversion as SamplerYcbcrModelConversion;
 pub use sb::VkSamplerYcbcrRange as SamplerYcbcrRange;
+pub use sb::VkSemaphore as Semaphore;
 pub use sb::VkSharingMode as SharingMode;
+
+pub fn semaphore_from_raw(raw: u64) -> Semaphore {
+    raw as Semaphore
+}
 
 pub const QUEUE_FAMILY_IGNORED: u32 = !0;
 

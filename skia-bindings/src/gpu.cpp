@@ -58,7 +58,6 @@ extern "C" GrBackendApi C_GrBackendSemaphore_backend(const GrBackendSemaphore* s
 extern "C" bool C_GrBackendSemaphore_isInitialized(const GrBackendSemaphore* semaphore) {
     return semaphore->isInitialized();
 }
-
 // GrBackendRenderTarget
 
 extern "C" void C_GrBackendRenderTarget_Construct(GrBackendRenderTarget* uninitialized) {
